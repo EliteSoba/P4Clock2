@@ -1,0 +1,23 @@
+<resources>
+  <string name="app_name">P4 HUD Widget</string>
+  <string name="desc">A simple widget to display date and weather</string>
+  <!-- Text strings shown in the main activity -->
+  <string name="location">Location</string>
+  <string name="choose_location">Choose Location</string>
+  <string name="latitude">Latitude</string>
+  <string name="longitude">Longitude</string>
+  <string name="use_current_location">Use Current Location</string>
+  <string name="disable_weather_updates">Disable Weather Updates</string>
+  <string name="force_update">Force Update</string>
+  <string name="add">You cannot add this widget from this screen. You must add it via the home screen. Exact instructions vary.</string>
+  <string name="addlInfo">To ensure this widget updates regularly, you may need to disable battery optimization for this app</string>
+  <string name="contact">For any concerns, please contact me at @Elite_Soba</string>
+  <string name="confirm">Confirm</string>
+  <!-- Fields for describing widget layout elements -->
+  <string name="dayDateDesc">Field to show the current date and day</string>
+  <string name="timeDesc">Field to show the current time</string>
+  <string name="circleDesc">Image to hold the Persona 4 datetime circle</string>
+  <string name="weatherDesc">Image to hold the current weather</string>
+  <string name="filler_desc">Filler box to force aspect ratio. Binds width</string>
+  <string name="filler_desc2">Second filler box to force aspect ratio. Binds height via other filler\'s width</string>
+</resources>
