@@ -20,7 +20,7 @@ import androidx.core.app.ActivityCompat;
 import java.util.Calendar;
 import java.util.Random;
 
-public class ClockWidgetUpateService extends Service implements LocationListener {
+public class ClockWidgetUpdateService extends Service implements LocationListener {
   private static final String LOGGER_TAG = "com.soba.p4clock.ClockWidgetUpdateService";
   private final static IntentFilter sIntentFilter;
   // The hour at which the weather was last updated
@@ -177,7 +177,6 @@ public class ClockWidgetUpateService extends Service implements LocationListener
       updateWeather();
       hour = h;
     }
-
   }
 
   @Override

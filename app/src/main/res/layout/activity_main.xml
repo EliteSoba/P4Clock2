@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+  xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
@@ -8,27 +9,27 @@
   android:descendantFocusability="beforeDescendants"
   android:focusableInTouchMode="true"
   android:theme="@android:style/Theme.Holo"
-  tools:context="com.soba.p4clock.MainActivity">
-
+  tools:context="com.soba.p4clock.MainActivity"
+  >
   <ScrollView
     android:id="@+id/scrollView2"
     android:layout_width="0dp"
     android:layout_height="wrap_content"
     app:layout_constraintLeft_toLeftOf="parent"
     app:layout_constraintRight_toRightOf="parent"
-    app:layout_constraintTop_toTopOf="parent">
-
+    app:layout_constraintTop_toTopOf="parent"
+  >
     <LinearLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:orientation="vertical">
-
+      android:orientation="vertical"
+    >
       <RadioGroup
         android:id="@+id/radioGroup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:checkedButton="@+id/chooseButton">
-
+        android:checkedButton="@+id/chooseButton"
+      >
         <TextView
           android:id="@+id/textView4"
           android:layout_width="wrap_content"
@@ -39,7 +40,6 @@
           android:text="@string/location"
           android:textSize="24sp"
         />
-
         <RadioButton
           android:id="@+id/chooseButton"
           android:layout_width="wrap_content"
@@ -48,13 +48,12 @@
           android:onClick="setLocation"
           android:text="@string/choose_location"
         />
-
         <LinearLayout
           android:layout_width="match_parent"
           android:layout_height="wrap_content"
           android:orientation="horizontal"
-          android:weightSum="2">
-
+          android:weightSum="2"
+        >
           <EditText
             android:id="@+id/latText"
             android:layout_width="wrap_content"
@@ -65,7 +64,6 @@
             android:inputType="numberSigned"
             android:selectAllOnFocus="true"
           />
-
           <EditText
             android:id="@+id/lonText"
             android:layout_width="wrap_content"
@@ -77,7 +75,6 @@
             android:selectAllOnFocus="true"
           />
         </LinearLayout>
-
         <RadioButton
           android:id="@+id/curLocationButton"
           android:layout_width="wrap_content"
@@ -87,7 +84,6 @@
           android:text="@string/use_current_location"
         />
       </RadioGroup>
-
       <View
         android:layout_width="match_parent"
         android:layout_height="2dp"
@@ -95,7 +91,6 @@
         android:layout_marginBottom="2dp"
         android:background="?android:attr/listDivider"
       />
-
       <CheckBox
         android:id="@+id/disableBox"
         android:layout_width="match_parent"
@@ -103,7 +98,6 @@
         android:onClick="disableWeather"
         android:text="@string/disable_weather_updates"
       />
-
       <View
         android:layout_width="match_parent"
         android:layout_height="2dp"
@@ -111,7 +105,6 @@
         android:layout_marginBottom="2dp"
         android:background="?android:attr/listDivider"
       />
-
       <Button
         android:id="@+id/updateButton"
         android:layout_width="match_parent"
@@ -121,7 +114,6 @@
         android:onClick="updateButton"
         android:text="@string/force_update"
       />
-
       <View
         android:layout_width="match_parent"
         android:layout_height="2dp"
@@ -129,7 +121,6 @@
         android:layout_marginBottom="2dp"
         android:background="?android:attr/listDivider"
       />
-
       <TextView
         android:id="@+id/infoText"
         android:layout_width="match_parent"
@@ -138,7 +129,6 @@
         android:text="@string/add"
         android:textAlignment="center"
       />
-
       <TextView
         android:id="@+id/infoText2"
         android:layout_width="match_parent"
@@ -147,7 +137,6 @@
         android:text="@string/addlInfo"
         android:textAlignment="center"
       />
-
       <TextView
         android:id="@+id/helpText"
         android:layout_width="match_parent"
@@ -156,7 +145,6 @@
         android:text="@string/contact"
         android:textAlignment="center"
       />
-
     </LinearLayout>
   </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

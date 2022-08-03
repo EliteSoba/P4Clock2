@@ -30,12 +30,21 @@ import java.util.Random;
 public class ClockWidget extends AppWidgetProvider {
   private static final String LOGGER_TAG = "com.soba.p4clock.ClockWidget";
 
+  private void runService(Context context, boolean force) {
+    Intent i = new Intent(context, UpdateService.class);
+    if (force) {
+      i.putExtra(AppStrings.FORCE, force);
+    }
+    context.startService(i);
+  }
+
   /**
    * onEnabled is called on instantiation of the first widget
    */
   public void onEnabled(Context context) {
     super.onEnabled(context);
     Log.v(LOGGER_TAG, "onEnabled: Widget added");
+    runService(context, false);
   }
 
   /**
@@ -45,15 +54,10 @@ public class ClockWidget extends AppWidgetProvider {
     //Called whenever settings get changed
     //Essentially, the controls call this to update the Service settings
     super.onReceive(context, intent);
-    Log.v(LOGGER_TAG, intent.getAction());
+    Log.v(LOGGER_TAG, "Intent Received: " + intent.getAction());
     if (AppStrings.UPDATE.equals(intent.getAction())) {
-      Intent i = new Intent(context, UpdateService.class);
-
-      if (intent.getBooleanExtra(AppStrings.FORCE, false)) {
-        i.putExtra(AppStrings.FORCE, true);
-      }
-
-      context.startService(i);
+      boolean force = intent.getBooleanExtra(AppStrings.FORCE, false);
+      runService(context, force);
     }
   }
 
@@ -65,9 +69,7 @@ public class ClockWidget extends AppWidgetProvider {
     super.onUpdate(context, appWidgetManager, appWidgetIds);
 
     Log.v(LOGGER_TAG, "onUpdate called");
-    Intent i = new Intent(context, UpdateService.class);
-    i.putExtra(AppStrings.FORCE, true);
-    context.startService(i);
+    // runService(context, true);
   }
 
   /**
@@ -243,28 +245,19 @@ public class ClockWidget extends AppWidgetProvider {
         updateWeather();
         hour = h;
       }
-
     }
 
     @Override
-    public void onLocationChanged(Location location) {
-
-    }
+    public void onLocationChanged(Location location) {}
 
     @Override
-    public void onStatusChanged(String provider, int status, Bundle extras) {
-
-    }
+    public void onStatusChanged(String provider, int status, Bundle extras) {}
 
     @Override
-    public void onProviderEnabled(String provider) {
-
-    }
+    public void onProviderEnabled(String provider) {}
 
     @Override
-    public void onProviderDisabled(String provider) {
-
-    }
+    public void onProviderDisabled(String provider) {}
 
     @Override
     public IBinder onBind(Intent intent) {
