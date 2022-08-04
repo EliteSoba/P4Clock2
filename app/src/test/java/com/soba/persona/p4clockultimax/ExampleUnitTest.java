@@ -1,4 +1,4 @@
-package com.soba.p4clock;
+package com.soba.persona.p4clockultimax;
 
 import org.junit.Test;
 

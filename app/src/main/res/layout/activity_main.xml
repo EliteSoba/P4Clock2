@@ -9,7 +9,7 @@
   android:descendantFocusability="beforeDescendants"
   android:focusableInTouchMode="true"
   android:theme="@android:style/Theme.Holo"
-  tools:context="com.soba.p4clock.MainActivity"
+  tools:context="com.soba.persona.p4clockultimax.MainActivity"
   >
   <ScrollView
     android:id="@+id/scrollView2"

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
-  package="com.soba.p4clock"
+  package="com.soba.persona.p4clockultimax"
 >
 
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -19,7 +19,7 @@
     tools:targetApi="31"
   >
     <activity
-      android:name=".MainActivity"
+      android:name="com.soba.persona.p4clockultimax.MainActivity"
       android:exported="true"
       android:theme="@style/AppTheme"
     >
@@ -29,7 +29,7 @@
       </intent-filter>
     </activity>
     <activity
-      android:name=".ConfigurationActivity"
+      android:name="com.soba.persona.p4clockultimax.ConfigurationActivity"
       android:exported="true"
     >
       <intent-filter>
@@ -38,13 +38,16 @@
     </activity>
 
     <receiver
-      android:name=".ClockWidget"
-      android:exported="false"
+      android:name="com.soba.persona.p4clockultimax.ClockWidget"
+      android:exported="true"
       android:label="Persona 4 HUD Widget"
     >
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-        <action android:name="com.soba.p4clock.APPWIDGET_UPDATE" />
+        <action android:name="com.soba.persona.p4clockultimax.APPWIDGET_UPDATE" />
+        <action android:name="android.intent.action.DATE_CHANGED" />
+        <action android:name="android.intent.action.TIME_SET" />
+        <action android:name="android.intent.action.USER_PRESENT" />
       </intent-filter>
       <meta-data
         android:name="android.appwidget.provider"
@@ -52,7 +55,7 @@
       />
     </receiver>
     <service
-      android:name=".ClockWidget$UpdateService"
+      android:name="com.soba.persona.p4clockultimax.ClockWidgetUpdateService"
       android:enabled="true"
       android:stopWithTask="false"
     />

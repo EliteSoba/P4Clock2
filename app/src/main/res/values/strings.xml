@@ -1,5 +1,5 @@
 <resources>
-  <string name="app_name">P4 HUD Widget</string>
+  <string name="app_name">P4 HUD Widget Ultimax</string>
   <string name="desc">A simple widget to display date and weather</string>
   <!-- Text strings shown in the main activity -->
   <string name="location">Location</string>

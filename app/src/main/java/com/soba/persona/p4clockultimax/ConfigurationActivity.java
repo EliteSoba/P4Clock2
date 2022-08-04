@@ -1,4 +1,4 @@
-package com.soba.p4clock;
+package com.soba.persona.p4clockultimax;
 
 import android.Manifest;
 import android.appwidget.AppWidgetManager;
@@ -32,38 +32,37 @@ import java.util.Arrays;
  * @author Soba 08-02-2022
  */
 public class ConfigurationActivity extends AppCompatActivity {
-  private static final String LOGGER_TAG = "com.soba.p4clock.ConfigurationActivity";
-  int id;
+  private static final String LOGGER_TAG = "com.soba.persona.p4clock.ConfigurationActivity";
+  private int id;
   private SharedPreferences prefs;
 
   public void initEditTexts() {
-    EditText latitude = (EditText) findViewById(R.id.latText);
+    EditText latitude = findViewById(R.id.latText);
     latitude.addTextChangedListener(new LonLatWatcher(AppStrings.LAT));
-    EditText longitude = (EditText) findViewById(R.id.lonText);
+    EditText longitude = findViewById(R.id.lonText);
     longitude.addTextChangedListener(new LonLatWatcher(AppStrings.LON));
 
     if (prefs.contains(AppStrings.LAT)) {
-      String latit = "" + prefs.getInt(AppStrings.LAT, 0);
-      latitude.setText(latit);
+      String lat = "" + prefs.getInt(AppStrings.LAT, 0);
+      latitude.setText(lat);
     }
     if (prefs.contains(AppStrings.LON)) {
-      String longi = "" + prefs.getInt(AppStrings.LON, 0);
-      longitude.setText(longi);
+      String lon = "" + prefs.getInt(AppStrings.LON, 0);
+      longitude.setText(lon);
     }
   }
 
   public void initRadios() {
     if (prefs.getBoolean(AppStrings.USE_LOC, false)) {
-      RadioButton useLoc = (RadioButton) findViewById(R.id.curLocationButton);
+      RadioButton useLoc = findViewById(R.id.curLocationButton);
       useLoc.setChecked(true);
       useLoc.callOnClick();
     }
     else {
-      RadioButton chooseLoc = (RadioButton) findViewById(R.id.chooseButton);
+      RadioButton chooseLoc = findViewById(R.id.chooseButton);
       chooseLoc.setChecked(true);
       chooseLoc.callOnClick();
     }
-
   }
 
   @Override
@@ -80,18 +79,18 @@ public class ConfigurationActivity extends AppCompatActivity {
     setContentView(R.layout.activity_main);
     prefs = getSharedPreferences(AppStrings.COM_NAME, MODE_PRIVATE);
 
-    Button start = (Button) findViewById(R.id.updateButton);
+    Button start = findViewById(R.id.updateButton);
     start.setText(R.string.confirm);
     start.setCompoundDrawables(null, null, null, null);
 
-    TextView textView = (TextView) findViewById(R.id.infoText);
+    TextView textView = findViewById(R.id.infoText);
     textView.setVisibility(View.GONE);
 
     initEditTexts();
     initRadios();
 
     if (prefs.getBoolean(AppStrings.DISABLED, false)) {
-      CheckBox disableBox = (CheckBox) findViewById(R.id.disableBox);
+      CheckBox disableBox = findViewById(R.id.disableBox);
       disableBox.setChecked(true);
       disableBox.callOnClick();
     }
@@ -116,7 +115,7 @@ public class ConfigurationActivity extends AppCompatActivity {
     if (prefs.contains(key)) {
       SharedPreferences.Editor edit = prefs.edit();
       edit.remove(key);
-      edit.commit();
+      edit.apply();
       updateWidget(false);
     }
   }
@@ -124,26 +123,26 @@ public class ConfigurationActivity extends AppCompatActivity {
   public void putInt(String key, int value) {
     SharedPreferences.Editor edit = prefs.edit();
     edit.putInt(key, value);
-    edit.commit();
+    edit.apply();
     updateWidget(false);
   }
 
   public void putBoolean(String key, boolean value, boolean force) {
     SharedPreferences.Editor edit = prefs.edit();
     edit.putBoolean(key, value);
-    edit.commit();
+    edit.apply();
     updateWidget(force);
   }
 
   public void disableWeather(View view) {
-    CheckBox disableBox = (CheckBox) findViewById(R.id.disableBox);
+    CheckBox disableBox = findViewById(R.id.disableBox);
     boolean enabled = !disableBox.isChecked();
-    RadioButton button2 = (RadioButton) findViewById(R.id.curLocationButton);
+    RadioButton button2 = findViewById(R.id.curLocationButton);
     button2.setEnabled(enabled);
-    RadioButton button3 = (RadioButton) findViewById(R.id.chooseButton);
+    RadioButton button3 = findViewById(R.id.chooseButton);
     button3.setEnabled(enabled);
-    EditText lat = (EditText) findViewById(R.id.lonText);
-    EditText lon = (EditText) findViewById(R.id.latText);
+    EditText lat = findViewById(R.id.lonText);
+    EditText lon = findViewById(R.id.latText);
     lat.setEnabled(enabled);
     lon.setEnabled(enabled);
 
@@ -176,7 +175,7 @@ public class ConfigurationActivity extends AppCompatActivity {
         putBoolean(AppStrings.USE_LOC, true, true);
       }
       else {
-        RadioButton choose = (RadioButton) findViewById(R.id.chooseButton);
+        RadioButton choose = findViewById(R.id.chooseButton);
         choose.setChecked(true);
       }
     }
