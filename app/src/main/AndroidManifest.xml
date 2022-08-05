@@ -40,7 +40,7 @@
     <receiver
       android:name="com.soba.persona.p4clockultimax.ClockWidget"
       android:exported="true"
-      android:label="Persona 4 HUD Widget"
+      android:label="Persona 4 HUD Widget Ultimax"
     >
       <intent-filter>
         <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />

@@ -46,7 +46,7 @@ public class ClockWidget extends AppWidgetProvider {
       // We're in the background and can't start the service intent,
       // so just update normally
       Log.v(LOGGER_TAG, "Update service failed to start. Simply updating view");
-      WidgetUpdater.get().doUpdate(context, true);
+      WidgetUpdater.get().doUpdate(context, force);
     }
   }
 

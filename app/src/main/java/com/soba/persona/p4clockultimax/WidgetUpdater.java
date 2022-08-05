@@ -228,7 +228,7 @@ public class WidgetUpdater {
     String day = (String) DateFormat.format("EEE", mCalendar);
     Bitmap dayDate = this.buildDayDate(context, date, day.toUpperCase());
     views.setImageViewBitmap(R.id.dayDate, dayDate);
-    Log.v(LOGGER_TAG, "Current date set to " + date + "(" + day + ")");
+    Log.v(LOGGER_TAG, "Current date set to " + date + " (" + day + ")");
 
     // Update time
     int hourToSet = mCalendar.get(Calendar.HOUR_OF_DAY);
