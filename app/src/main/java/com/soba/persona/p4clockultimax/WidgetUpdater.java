@@ -34,6 +34,7 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Semaphore;
 import java.util.function.Consumer;
 
 /**
@@ -56,11 +57,6 @@ public class WidgetUpdater {
 
   private static final String LOGGER_TAG = "com.soba.persona.p4clock.WidgetUpdater";
 
-  private static final String[] LOCATION_PROVIDERS = new String[] {
-    Manifest.permission.ACCESS_COARSE_LOCATION,
-    Manifest.permission.ACCESS_FINE_LOCATION
-  };
-
   // Providers for updating date, time, and weather
   private FusedLocationProviderClient fusedLocationClient;
   private final Calendar mCalendar;
@@ -70,45 +66,42 @@ public class WidgetUpdater {
   private Typeface dateFont = null;
   private Typeface dayOfWeekFont = null;
 
-  // Last day/hour updated, to theoretically cache updates
-  // but these get set even if the assets don't get updated so they're ignored
-  private int curHour;
-  private int curDay;
-
   // Location information
   SharedPreferences prefs;
-  private int lat;
-  private int lon;
+  private float lat;
+  private float lon;
   private boolean located;
+
+  /**
+   * Control flow boolean to prevent multiple concurrent API calls
+   */
+  private boolean fetching;
 
   private WidgetUpdater() {
     mCalendar = Calendar.getInstance();
     executor = new GetWeatherTaskExecutor();
 
-    curHour = -1;
-    curDay = -1;
-
     prefs = null;
     lat = -1;
     lon = -1;
     located = false;
+
+    fetching = false;
   }
 
-  public int getCurHour() {
-    return curHour;
-  }
-
-  public int getCurDay() {
-    return curDay;
-  }
-
-  public void setLocation(int lat, int lon) {
+  public void setLocation(float lat, float lon) {
     this.lat = lat;
     this.lon = lon;
     this.located = true;
     Log.v(LOGGER_TAG, "Location set to (" + lat + ", " + lon + ")");
   }
 
+  /**
+   * Converts the stored weatherCode into an actual weather symbol
+   * TODO: Change stored weather code to stored weather enum,
+   *  so it's not tied so heavily to the API's response codes
+   *  and allows interchanging of backing weather API
+   */
   private int buildWeatherIcon(int weatherCode) {
     int icon;
     switch (weatherCode / 100) {
@@ -141,6 +134,14 @@ public class WidgetUpdater {
     return icon;
   }
 
+  /**
+   * Converts the current hour into an asset describing the current time of day
+   * TODO: Allow user input to adjust these windows, because not everyone has lunch
+   *  from 12:00-14:00
+   * TODO: Consider adding minute-level granularity
+   * TODO: The openweathermap API gives sunrise and sunset, so consider if those are usable
+   *  for determining morning/evening/night
+   */
   private int buildTime(int hour) {
     if (hour == 0) {
       return R.drawable.midnight;
@@ -168,6 +169,9 @@ public class WidgetUpdater {
     }
   }
 
+  /**
+   * Creates a Bitmap image describing the current day/date to show to the user
+   */
   private Bitmap buildDayDate(Context context, String date, String day) {
     if (this.dateFont == null) {
       this.dateFont = Typeface.createFromAsset(context.getAssets(), "fonts/Days.ttf");
@@ -175,42 +179,42 @@ public class WidgetUpdater {
     if (this.dayOfWeekFont == null) {
       this.dayOfWeekFont = Typeface.createFromAsset(context.getAssets(), "fonts/RobotoCondensed-Regular.ttf");
     }
-    Paint paint = new Paint();
-    paint.setAntiAlias(true);
-    paint.setSubpixelText(true);
-    paint.setTypeface(this.dateFont);
-    paint.setStyle(Paint.Style.FILL);
-    paint.setColor(Color.WHITE);
-    paint.setTextSize(100);
-    paint.setLetterSpacing(0.25f);
+    Paint datePaint = new Paint();
+    datePaint.setAntiAlias(true);
+    datePaint.setSubpixelText(true);
+    datePaint.setTypeface(this.dateFont);
+    datePaint.setStyle(Paint.Style.FILL);
+    datePaint.setColor(Color.WHITE);
+    datePaint.setTextSize(100);
+    datePaint.setLetterSpacing(0.25f);
 
-    Paint paint2 = new Paint();
-    paint2.setAntiAlias(true);
-    paint2.setSubpixelText(true);
-    paint2.setTypeface(this.dayOfWeekFont);
-    paint2.setStyle(Paint.Style.FILL);
-    paint2.setColor(Color.WHITE);
+    Paint dayOfWeekPaint = new Paint();
+    dayOfWeekPaint.setAntiAlias(true);
+    dayOfWeekPaint.setSubpixelText(true);
+    dayOfWeekPaint.setTypeface(this.dayOfWeekFont);
+    dayOfWeekPaint.setStyle(Paint.Style.FILL);
+    dayOfWeekPaint.setColor(Color.WHITE);
 
     // Special colors for weekends. Holidays should probably also be red, but that's much
     // harder to set up and I'm not feeling it right now
     if ("SAT".equals(day)) {
-      paint2.setColor(Color.rgb(165, 194, 218));
+      dayOfWeekPaint.setColor(Color.rgb(165, 194, 218));
     }
     else if ("SUN".equals(day)) {
-      paint2.setColor(Color.rgb(215, 157, 167));
+      dayOfWeekPaint.setColor(Color.rgb(215, 157, 167));
     }
-    paint2.setTextSize(65);
+    dayOfWeekPaint.setTextSize(65);
 
-    int dateWidth = (int) paint.measureText(date);
-    int dayWidth = (int) paint2.measureText(day);
+    int dateWidth = (int) datePaint.measureText(date);
+    int dayWidth = (int) dayOfWeekPaint.measureText(day);
 
     Bitmap myBitmap = Bitmap.createBitmap(
       dateWidth + 75 + dayWidth + 100,
       75, Bitmap.Config.ARGB_8888);
     Canvas myCanvas = new Canvas(myBitmap);
 
-    myCanvas.drawText(date, 0, 75, paint);
-    myCanvas.drawText(day, dateWidth + 75, 52, paint2);
+    myCanvas.drawText(date, 0, 75, datePaint);
+    myCanvas.drawText(day, dateWidth + 75, 52, dayOfWeekPaint);
 
     return myBitmap;
   }
@@ -224,19 +228,17 @@ public class WidgetUpdater {
     String day = (String) DateFormat.format("EEE", mCalendar);
     Bitmap dayDate = this.buildDayDate(context, date, day.toUpperCase());
     views.setImageViewBitmap(R.id.dayDate, dayDate);
-    this.curDay = mCalendar.get(Calendar.DATE);
-    Log.v(LOGGER_TAG, "Current day set to " + curDay);
+    Log.v(LOGGER_TAG, "Current date set to " + date + "(" + day + ")");
 
     // Update time
     int hourToSet = mCalendar.get(Calendar.HOUR_OF_DAY);
     int timeOfDay = this.buildTime(hourToSet);
     views.setImageViewResource(R.id.timeOfDay, timeOfDay);
-    this.curHour = hourToSet;
     Log.v(LOGGER_TAG, "Current hour set to " + hourToSet);
 
     // Update weather
     SharedPreferences prefs = getPrefs(context);
-    int lastWeatherCode = prefs.getInt(AppStrings.WEATHER_CODE, 900);
+    int lastWeatherCode = prefs.getInt(AppConstants.WEATHER_CODE, 900);
     int weatherIcon = this.buildWeatherIcon(lastWeatherCode);
     views.setImageViewResource(R.id.weatherIcon, weatherIcon);
     Log.v(LOGGER_TAG, "Current weather set to " + lastWeatherCode);
@@ -244,18 +246,9 @@ public class WidgetUpdater {
   }
 
   /**
-   * Updates a view for a specific widget
-   * Currently unused
-   */
-  public void updateView(Context context, AppWidgetManager manager, int appWidgetId) {
-    RemoteViews views = getUpdatedView(context);
-    manager.updateAppWidget(appWidgetId, views);
-  }
-
-  /**
    * Fully updates the view shown by the widget, using cached data
    */
-  public void updateView(Context context) {
+  private void updateView(Context context) {
     RemoteViews views = getUpdatedView(context);
 
     ComponentName widget = new ComponentName(context, ClockWidget.class.getName());
@@ -264,17 +257,47 @@ public class WidgetUpdater {
     manager.updateAppWidget(widget, views);
   }
 
+  /**
+   * Public facing method to actually update the widget.
+   */
+  public void doUpdate(Context context, boolean force) {
+    boolean updateWeather = force;
+
+    SharedPreferences prefs = getPrefs(context);
+
+    // Only do a weather update if it's forced or if enough time has elapsed since the last update
+    if (!updateWeather) {
+      long lastUpdate = prefs.getLong(AppConstants.WEATHER_LAST_UPDATED, 0);
+      updateWeather = System.currentTimeMillis() - lastUpdate > AppConstants.WEATHER_UPDATE_FREQUENCY;
+    }
+
+    if (updateWeather) {
+      // Fetch the current location and then update the weather and subsequently the date/time
+      this.updateLocation(context, nothing -> this.updateWeather(context));
+    }
+    else {
+      // Otherwise just update based on cached weather data
+      this.updateView(context);
+    }
+  }
+
+  /**
+   * Gets the SharedPreferences object for this app
+   */
   private SharedPreferences getPrefs(Context context) {
     if (prefs == null) {
-      prefs = context.getSharedPreferences(AppStrings.COM_NAME, Context.MODE_PRIVATE);
+      prefs = context.getSharedPreferences(AppConstants.COM_NAME, Context.MODE_PRIVATE);
     }
     return prefs;
   }
 
-  public void updateLocation(Context context, @Nullable Consumer<Integer> weatherUpdatedCallback) {
+  /**
+   * Updates the stored location for the updater
+   */
+  private void updateLocation(Context context, @Nullable Consumer<Integer> weatherUpdatedCallback) {
     SharedPreferences prefs = getPrefs(context);
 
-    boolean useLocation = prefs.getBoolean(AppStrings.USE_LOC, false);
+    boolean useLocation = prefs.getBoolean(AppConstants.USE_LOC, false);
     if (useLocation) {
       Log.v(LOGGER_TAG, "Getting Location");
 
@@ -282,14 +305,14 @@ public class WidgetUpdater {
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context);
       }
 
-      boolean locationEnabled = Arrays.stream(LOCATION_PROVIDERS)
+      boolean locationEnabled = Arrays.stream(AppConstants.LOCATION_PROVIDERS)
         .anyMatch(provider -> ActivityCompat.checkSelfPermission(context, provider) == PackageManager.PERMISSION_GRANTED);
       if (locationEnabled) {
         fusedLocationClient.getLastLocation()
           .addOnSuccessListener(location -> {
             if (location != null) {
-              lat = (int) location.getLatitude();
-              lon = (int) location.getLongitude();
+              lat = (float)(Math.round(location.getLatitude() * 100) / 100.0);
+              lon = (float)(Math.round(location.getLongitude() * 100) / 100.0);
               setLocation(lat, lon);
 
               if (weatherUpdatedCallback != null) {
@@ -299,9 +322,10 @@ public class WidgetUpdater {
           });
       }
     }
-    else if (prefs.contains(AppStrings.LAT) && prefs.contains(AppStrings.LON)) {
-      lat = prefs.getInt(AppStrings.LAT, 0);
-      lon = prefs.getInt(AppStrings.LON, 0);
+    else if (prefs.contains(AppConstants.LAT) && prefs.contains(AppConstants.LON)) {
+      // Only get 2 decimals of precision for lat/lon because otherwise it could be infinite lmao
+      lat = (float)(Math.round(prefs.getFloat(AppConstants.LAT, 0) * 100) / 100.0);
+      lon = (float)(Math.round(prefs.getFloat(AppConstants.LON, 0) * 100) / 100.0);
       setLocation(lat, lon);
 
       if (weatherUpdatedCallback != null) {
@@ -310,37 +334,70 @@ public class WidgetUpdater {
     }
   }
 
-  public void updateWeather(Context context) {
+  /**
+   * Fetches weather data from the backing API and updates the widget
+   * A bit misnamed because it updates date/time on top of weather,
+   * but I can't think of a better name
+   */
+  private void updateWeather(Context context) {
     SharedPreferences prefs = getPrefs(context);
-    if (prefs.getBoolean(AppStrings.DISABLED, false) || !located) {
+    if (prefs.getBoolean(AppConstants.DISABLED, false) || !located) {
       // We can't update if we're not located
+      return;
+    }
+    if (fetching) {
+      // Don't do an API request if we're in the middle of another one
+      // I sure hope I'm getting the async logic right here
       return;
     }
 
     Log.v(LOGGER_TAG, "Fetching weather for location (" + lat + ", " + lon + ")");
 
-    try {
-      String url = "http://api.openweathermap.org/data/2.5/weather?"
-        + "lat=" + this.lat + "&lon=" + this.lon
-        + "&APPID=" + context.getString(R.string.openweatherKey);
+    synchronized (this) {
+      if (fetching) {
+        // Finer filter because idk if the synchronized block also affects the callback
+        return;
+      }
+      try {
+        fetching = true;
+        String url = "http://api.openweathermap.org/data/2.5/weather?"
+          + "lat=" + this.lat + "&lon=" + this.lon
+          + "&APPID=" + context.getString(R.string.openweatherKey);
 
-      GetWeatherTaskExecutor executor = new GetWeatherTaskExecutor();
-      executor.execute(new GetWeatherTask(
-        new URL(url),
-        result -> {
-          Log.v(LOGGER_TAG, "Got weather code " + result);
-          SharedPreferences.Editor edit = prefs.edit();
-          edit.putInt(AppStrings.WEATHER_CODE, result);
-          edit.apply();
-          this.updateView(context);
-        }));
+        executor.execute(new GetWeatherTask(
+          new URL(url),
+          result -> {
+            if (result == -1) {
+              Log.v(LOGGER_TAG, "Failed to get weather. Trying again in 30 minutes");
+              SharedPreferences.Editor edit = prefs.edit();
+              edit.putLong(AppConstants.WEATHER_LAST_UPDATED, System.currentTimeMillis() - 100 * 60 * 30);
+              edit.apply();
+              fetching = false;
 
-    }
-    catch (MalformedURLException e) {
-      e.printStackTrace();
+              // Update the view anyway for date/time
+              this.updateView(context);
+            }
+            else {
+              Log.v(LOGGER_TAG, "Got weather code " + result);
+              SharedPreferences.Editor edit = prefs.edit();
+              edit.putInt(AppConstants.WEATHER_CODE, result);
+              edit.putLong(AppConstants.WEATHER_LAST_UPDATED, System.currentTimeMillis());
+              edit.apply();
+              fetching = false;
+              this.updateView(context);
+            }
+          }));
+      }
+      catch (MalformedURLException e) {
+        fetching = false;
+        e.printStackTrace();
+      }
     }
   }
 
+  /**
+   * Executor helper class to run a GetWeatherTask
+   */
   private static class GetWeatherTaskExecutor implements Executor {
     @Override
     public void execute(Runnable runnable) {
@@ -348,6 +405,9 @@ public class WidgetUpdater {
     }
   }
 
+  /**
+   * Runnable helper class to interact with the backing API
+   */
   private static class GetWeatherTask implements Runnable {
     private final Consumer<Integer> callback;
     private final URL url;
@@ -362,6 +422,7 @@ public class WidgetUpdater {
         Log.v(LOGGER_TAG, "Fetching weather from API");
         HttpURLConnection urlConnection = (HttpURLConnection) this.url.openConnection();
         BufferedReader read = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
+        Log.v(LOGGER_TAG, "Got response from API");
 
         StringBuilder result = new StringBuilder();
         String line;
@@ -371,14 +432,23 @@ public class WidgetUpdater {
 
         String output = result.toString();
         JSONObject jsonOut = new JSONObject(output);
+        Log.v(LOGGER_TAG, "Parsed response from API");
         JSONArray weather = jsonOut.getJSONArray("weather");
         return weather.getJSONObject(0).getInt("id");
-
       }
-      catch (IOException | JSONException e) {
+      catch (IOException e) {
+        Log.v(LOGGER_TAG, "Hit an exception trying to fetch from the API");
         e.printStackTrace();
       }
-      return 0;
+      catch (JSONException e) {
+        Log.v(LOGGER_TAG, "Hit an exception trying to parse the response");
+        e.printStackTrace();
+      }
+      catch (Exception e) {
+        Log.v(LOGGER_TAG, "Hit an unknown exception");
+        e.printStackTrace();
+      }
+      return -1;
     }
 
     @Override

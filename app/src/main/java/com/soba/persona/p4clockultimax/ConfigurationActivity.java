@@ -27,7 +27,9 @@ import java.util.Arrays;
 
 /**
  * Unused class that _could_ be used to launch a configuration activity
- * when adding a widget
+ * when adding a widget.
+ *
+ * Last updated - v1.1
  *
  * @author Soba 08-02-2022
  */
@@ -38,22 +40,22 @@ public class ConfigurationActivity extends AppCompatActivity {
 
   public void initEditTexts() {
     EditText latitude = findViewById(R.id.latText);
-    latitude.addTextChangedListener(new LonLatWatcher(AppStrings.LAT));
+    latitude.addTextChangedListener(new LonLatWatcher(AppConstants.LAT));
     EditText longitude = findViewById(R.id.lonText);
-    longitude.addTextChangedListener(new LonLatWatcher(AppStrings.LON));
+    longitude.addTextChangedListener(new LonLatWatcher(AppConstants.LON));
 
-    if (prefs.contains(AppStrings.LAT)) {
-      String lat = "" + prefs.getInt(AppStrings.LAT, 0);
+    if (prefs.contains(AppConstants.LAT)) {
+      String lat = "" + prefs.getFloat(AppConstants.LAT, 0);
       latitude.setText(lat);
     }
-    if (prefs.contains(AppStrings.LON)) {
-      String lon = "" + prefs.getInt(AppStrings.LON, 0);
+    if (prefs.contains(AppConstants.LON)) {
+      String lon = "" + prefs.getFloat(AppConstants.LON, 0);
       longitude.setText(lon);
     }
   }
 
   public void initRadios() {
-    if (prefs.getBoolean(AppStrings.USE_LOC, false)) {
+    if (prefs.getBoolean(AppConstants.USE_LOC, false)) {
       RadioButton useLoc = findViewById(R.id.curLocationButton);
       useLoc.setChecked(true);
       useLoc.callOnClick();
@@ -77,7 +79,7 @@ public class ConfigurationActivity extends AppCompatActivity {
     setResult(RESULT_CANCELED);
 
     setContentView(R.layout.activity_main);
-    prefs = getSharedPreferences(AppStrings.COM_NAME, MODE_PRIVATE);
+    prefs = getSharedPreferences(AppConstants.COM_NAME, MODE_PRIVATE);
 
     Button start = findViewById(R.id.updateButton);
     start.setText(R.string.confirm);
@@ -89,7 +91,7 @@ public class ConfigurationActivity extends AppCompatActivity {
     initEditTexts();
     initRadios();
 
-    if (prefs.getBoolean(AppStrings.DISABLED, false)) {
+    if (prefs.getBoolean(AppConstants.DISABLED, false)) {
       CheckBox disableBox = findViewById(R.id.disableBox);
       disableBox.setChecked(true);
       disableBox.callOnClick();
@@ -102,8 +104,8 @@ public class ConfigurationActivity extends AppCompatActivity {
 
   public void updateWidget(boolean force) {
     Intent intent = new Intent(this, ClockWidget.class);
-    intent.setAction(AppStrings.UPDATE);
-    intent.putExtra(AppStrings.FORCE, force);
+    intent.setAction(AppConstants.UPDATE);
+    intent.putExtra(AppConstants.FORCE, force);
     sendBroadcast(intent);
 
     AppWidgetManager awm = AppWidgetManager.getInstance(this);
@@ -120,9 +122,9 @@ public class ConfigurationActivity extends AppCompatActivity {
     }
   }
 
-  public void putInt(String key, int value) {
+  public void putFloat(String key, float value) {
     SharedPreferences.Editor edit = prefs.edit();
-    edit.putInt(key, value);
+    edit.putFloat(key, value);
     edit.apply();
     updateWidget(false);
   }
@@ -152,7 +154,7 @@ public class ConfigurationActivity extends AppCompatActivity {
         inputManager.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), InputMethodManager.HIDE_NOT_ALWAYS);
       }
     }
-    putBoolean(AppStrings.DISABLED, !enabled, false);
+    putBoolean(AppConstants.DISABLED, !enabled, false);
   }
 
   public void updateButton(View view) {
@@ -172,7 +174,7 @@ public class ConfigurationActivity extends AppCompatActivity {
         .anyMatch(result -> result == PackageManager.PERMISSION_GRANTED);
 
       if (accepted) {
-        putBoolean(AppStrings.USE_LOC, true, true);
+        putBoolean(AppConstants.USE_LOC, true, true);
       }
       else {
         RadioButton choose = findViewById(R.id.chooseButton);
@@ -187,12 +189,12 @@ public class ConfigurationActivity extends AppCompatActivity {
       ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 1);
     }
     else {
-      putBoolean(AppStrings.USE_LOC, true, false);
+      putBoolean(AppConstants.USE_LOC, true, false);
     }
   }
 
   public void setLocation(View view) {
-    putBoolean(AppStrings.USE_LOC, false, false);
+    putBoolean(AppConstants.USE_LOC, false, false);
   }
 
   /**
@@ -219,7 +221,7 @@ public class ConfigurationActivity extends AppCompatActivity {
       }
       else {
         try {
-          putInt(this.key, Integer.parseInt(s.toString()));
+          putFloat(this.key, Float.parseFloat(s.toString()));
           Log.v(LOGGER_TAG, this.key + " set to " + s);
         }
         catch (NumberFormatException e) {

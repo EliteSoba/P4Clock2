@@ -6,6 +6,9 @@
   <string name="choose_location">Choose Location</string>
   <string name="latitude">Latitude</string>
   <string name="longitude">Longitude</string>
+  <string name="find_location">Find current location</string>
+  <string name="finding_location">Getting location...</string>
+  <string name="couldnt_find_location">Couldn\'t find location. Try again later</string>
   <string name="use_current_location">Use Current Location</string>
   <string name="disable_weather_updates">Disable Weather Updates</string>
   <string name="force_update">Force Update</string>

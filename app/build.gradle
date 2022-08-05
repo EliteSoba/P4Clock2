@@ -1,12 +1,29 @@
 plugins {
   id 'com.android.application'
 }
-
 android {
+  // Load keystore properties if file exists
+  def keystoreProperties = file('./signing.properties')
+  if (keystoreProperties.exists()) {
+    Properties props = new Properties()
+    props.load(new FileInputStream(keystoreProperties))
+    props.each { prop ->
+      project.ext.set(prop.key, prop.value)
+    }
+  }
+
+  // Read passwords from Gradle properties and if not found, then from environment variables
+  def keystore_file = project.hasProperty('KEYSTORE_FILE') ? KEYSTORE_FILE : System.getenv("KEYSTORE_FILE")
+  def keystore_password = project.hasProperty('KEYSTORE_PASSWORD') ? KEYSTORE_PASSWORD : System.getenv("KEYSTORE_PASSWORD")
+  def key_alias = project.hasProperty('KEY_ALIAS') ? KEY_ALIAS : System.getenv("KEY_ALIAS")
+  def key_password = project.hasProperty('KEY_PASSWORD') ? KEY_PASSWORD : System.getenv("KEY_PASSWORD")
+
   signingConfigs {
       release {
-        storeFile file('C:\\Users\\Tobias\\Documents\\android_keystore2.jks')
-        keyAlias 'key0'
+        storeFile file(keystore_file)
+        storePassword keystore_password
+        keyAlias key_alias
+        keyPassword key_password
       }
   }
   compileSdk 32
